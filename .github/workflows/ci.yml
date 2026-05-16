@@ -1,0 +1,166 @@
+name: Laravel CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - dev
+      - develop
+      - qa
+      - uat
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  validate-env:
+    name: Validate Environment Files
+    if: github.event_name == 'pull_request' || contains(fromJSON('["refs/heads/dev","refs/heads/develop","refs/heads/qa","refs/heads/uat","refs/heads/main","refs/heads/master"]'), github.ref)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Validate *.env files (paranoid)
+        run: php scripts/validate-env-files.php
+
+  tests:
+    name: Tests With Coverage Gate
+    if: github.event_name == 'pull_request' || contains(fromJSON('["refs/heads/dev","refs/heads/develop","refs/heads/qa","refs/heads/uat","refs/heads/main","refs/heads/master"]'), github.ref)
+    needs: [validate-env]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: xdebug
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Prepare CI environment
+        run: cp .env.ci .env
+
+      - name: Run tests with Clover report
+        run: composer test:coverage
+
+      - name: Enforce 50% coverage gate
+        run: composer check:coverage
+
+  static-analysis:
+    name: Static Analysis (Larastan)
+    if: github.event_name == 'pull_request' || contains(fromJSON('["refs/heads/dev","refs/heads/develop","refs/heads/qa","refs/heads/uat","refs/heads/main","refs/heads/master"]'), github.ref)
+    needs: [validate-env]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Run Larastan
+        run: composer analyse
+
+  lint-check:
+    name: Lint Check (Pint --test)
+    if: github.event_name == 'pull_request' || contains(fromJSON('["refs/heads/dev","refs/heads/develop","refs/heads/qa","refs/heads/uat","refs/heads/main","refs/heads/master"]'), github.ref)
+    needs: [validate-env]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Run Pint in test mode
+        run: composer lint
+
+  lint-fix-other-branches:
+    name: Lint Auto-Fix (non long-lived branches)
+    if: github.event_name == 'push' && !contains(fromJSON('["refs/heads/dev","refs/heads/develop","refs/heads/qa","refs/heads/uat","refs/heads/main","refs/heads/master"]'), github.ref)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Auto-format with Pint
+        run: composer lint:fix
+
+  deploy-dev-uat:
+    name: Deploy Simulation (dev/uat)
+    if: github.event_name == 'push' && contains(fromJSON('["refs/heads/dev","refs/heads/develop","refs/heads/qa","refs/heads/uat"]'), github.ref)
+    needs: [tests, static-analysis, lint-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select environment file and simulate deploy
+        run: |
+          case "${GITHUB_REF_NAME}" in
+            dev|develop)
+              ENV_FILE=".env.dev"
+              TARGET_ENV="DEV"
+              ;;
+            qa|uat)
+              ENV_FILE=".env.uat"
+              TARGET_ENV="UAT"
+              ;;
+            *)
+              echo "Unsupported branch for deployment simulation: ${GITHUB_REF_NAME}"
+              exit 1
+              ;;
+          esac
+
+          cp "${ENV_FILE}" .env
+          echo "Deploying to ${TARGET_ENV} with ${ENV_FILE}"
+
+  deploy-prod:
+    name: Deploy Simulation (main/master, manual approval)
+    if: github.event_name == 'push' && contains(fromJSON('["refs/heads/main","refs/heads/master"]'), github.ref)
+    needs: [tests, static-analysis, lint-check]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Simulate production deploy
+        run: |
+          cp .env.prod .env
+          echo "Deploying to PROD with .env.prod"
