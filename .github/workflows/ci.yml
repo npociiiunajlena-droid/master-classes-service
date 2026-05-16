@@ -50,7 +50,7 @@ jobs:
           coverage: xdebug
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-req=ext-fileinfo
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-reqs
 
       - name: Prepare CI environment
         run: cp .env.ci .env
@@ -77,7 +77,7 @@ jobs:
           extensions: mbstring, fileinfo, dom, xml, xmlwriter
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-req=ext-fileinfo
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-reqs
 
       - name: Run Larastan
         run: composer analyse
@@ -98,7 +98,7 @@ jobs:
           extensions: mbstring, fileinfo, dom, xml, xmlwriter
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-req=ext-fileinfo
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-reqs
 
       - name: Run Pint in test mode
         run: composer lint
@@ -118,7 +118,7 @@ jobs:
           extensions: mbstring, fileinfo, dom, xml, xmlwriter
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-req=ext-fileinfo
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-reqs
 
       - name: Auto-format with Pint
         run: composer lint:fix
