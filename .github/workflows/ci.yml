@@ -46,11 +46,11 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, pdo_sqlite, sqlite3
+          extensions: mbstring, pdo_sqlite, sqlite3, fileinfo, dom, xml, xmlwriter
           coverage: xdebug
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-req=ext-fileinfo
 
       - name: Prepare CI environment
         run: cp .env.ci .env
@@ -74,9 +74,10 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          extensions: mbstring, fileinfo, dom, xml, xmlwriter
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-req=ext-fileinfo
 
       - name: Run Larastan
         run: composer analyse
@@ -94,9 +95,10 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          extensions: mbstring, fileinfo, dom, xml, xmlwriter
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-req=ext-fileinfo
 
       - name: Run Pint in test mode
         run: composer lint
@@ -113,9 +115,10 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
+          extensions: mbstring, fileinfo, dom, xml, xmlwriter
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts --ignore-platform-req=ext-fileinfo
 
       - name: Auto-format with Pint
         run: composer lint:fix
