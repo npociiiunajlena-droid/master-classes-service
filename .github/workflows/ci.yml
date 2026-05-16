@@ -50,7 +50,7 @@ jobs:
           coverage: xdebug
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
 
       - name: Prepare CI environment
         run: cp .env.ci .env
@@ -76,7 +76,7 @@ jobs:
           php-version: '8.3'
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
 
       - name: Run Larastan
         run: composer analyse
@@ -96,7 +96,7 @@ jobs:
           php-version: '8.3'
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
 
       - name: Run Pint in test mode
         run: composer lint
@@ -115,7 +115,7 @@ jobs:
           php-version: '8.3'
 
       - name: Install Composer dependencies
-        run: composer install --no-interaction --no-progress --prefer-dist
+        run: composer install --no-interaction --no-progress --prefer-dist --no-scripts
 
       - name: Auto-format with Pint
         run: composer lint:fix
